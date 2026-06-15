@@ -95,4 +95,75 @@ RSpec.describe Dotenv::SecretsManager::Resolver do
       expect(client.requested_ids).to eq(["firstquote/prod"])
     end
   end
+
+  describe "on_error: :raise (default)" do
+    it "aggregates every failure into a single ResolutionError naming each env var" do
+      client = FakeSecretsClient.new(
+        secrets: { "good" => '{"k":"v"}' },
+        errors: { "missing" => aws_service_error("Secrets Manager can't find the specified secret.") }
+      )
+      env = {
+        "FOUND" => "aws-sm:good|k",
+        "GONE" => "aws-sm:missing",
+        "NO_KEY" => "aws-sm:good|absent",
+        "BAD_REF" => "aws-sm:"
+      }
+
+      expect { resolve(env, config_with(client: client, on_error: :raise)) }
+        .to raise_error(Dotenv::SecretsManager::ResolutionError) { |e|
+          expect(e.message).to include("GONE")
+          expect(e.message).to include("NO_KEY")
+          expect(e.message).to include("BAD_REF")
+          expect(e.message).to include("3 Secrets Manager reference(s)")
+        }
+    end
+
+    it "fails when a |key is requested against a non-JSON secret" do
+      client = FakeSecretsClient.new(secrets: { "plain" => "not-json" })
+      env = { "X" => "aws-sm:plain|key" }
+
+      expect { resolve(env, config_with(client: client)) }
+        .to raise_error(Dotenv::SecretsManager::ResolutionError, /not valid JSON/)
+    end
+
+    it "fails when the secret has no string value (binary secret)" do
+      client = FakeSecretsClient.new(secrets: { "bin" => nil })
+      env = { "X" => "aws-sm:bin" }
+
+      expect { resolve(env, config_with(client: client)) }
+        .to raise_error(Dotenv::SecretsManager::ResolutionError, /no string value/)
+    end
+  end
+
+  describe "on_error: :warn" do
+    it "logs each failure and leaves the original literal untouched" do
+      logger = instance_double("Logger")
+      allow(logger).to receive(:warn)
+      client = FakeSecretsClient.new(
+        errors: { "missing" => aws_service_error("not found") }
+      )
+      env = { "GONE" => "aws-sm:missing", "PLAIN" => "keepme" }
+
+      result = resolve(env, config_with(client: client, on_error: :warn, logger: logger))
+
+      expect(result["GONE"]).to eq("aws-sm:missing")
+      expect(result["PLAIN"]).to eq("keepme")
+      expect(logger).to have_received(:warn).with(/GONE.*aws-sm:missing.*not found/)
+    end
+
+    it "still substitutes the references that DID resolve" do
+      logger = instance_double("Logger")
+      allow(logger).to receive(:warn)
+      client = FakeSecretsClient.new(
+        secrets: { "good" => "value" },
+        errors: { "missing" => aws_service_error("not found") }
+      )
+      env = { "OK" => "aws-sm:good", "GONE" => "aws-sm:missing" }
+
+      resolve(env, config_with(client: client, on_error: :warn, logger: logger))
+
+      expect(env["OK"]).to eq("value")
+      expect(env["GONE"]).to eq("aws-sm:missing")
+    end
+  end
 end
