@@ -8,7 +8,7 @@ module Dotenv
     # before_configuration phase, which is after dotenv-rails populates ENV
     # (provided this gem is required after dotenv-rails) and before initializers
     # and database.yml consume the values.
-    class Railtie < Rails::Railtie
+    class Railtie < ::Rails::Railtie
       config.before_configuration do
         Dotenv::SecretsManager.resolve!(ENV)
       end
