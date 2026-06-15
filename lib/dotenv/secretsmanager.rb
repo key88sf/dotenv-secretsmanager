@@ -22,6 +22,10 @@ module Dotenv
       def reset_configuration!
         @configuration = Configuration.new
       end
+
+      def resolve!(env = ENV)
+        Resolver.new(env: env, config: configuration).resolve!
+      end
     end
   end
 end
