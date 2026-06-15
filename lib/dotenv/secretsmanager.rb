@@ -3,6 +3,7 @@
 require "dotenv/secretsmanager/version"
 require "dotenv/secretsmanager/errors"
 require "dotenv/secretsmanager/configuration"
+require "dotenv/secretsmanager/reference"
 
 module Dotenv
   module SecretsManager
