@@ -20,12 +20,12 @@ bundle install
 
 ```bash
 # whole plaintext secret
-RAILS_MASTER_KEY=aws-sm:firstquote/master-key
+RAILS_MASTER_KEY=aws-sm:myproject/master-key
 
 # one key from a JSON secret (all three share a single API call)
-DB_PASSWORD=aws-sm:firstquote/prod|db_password
-YELP_SECRET=aws-sm:firstquote/prod|yelp_client_secret
-TWILIO_TOKEN=aws-sm:firstquote/prod|twilio_auth_token
+DB_PASSWORD=aws-sm:myproject/prod|db_password
+YELP_SECRET=aws-sm:myproject/prod|yelp_client_secret
+TWILIO_TOKEN=aws-sm:myproject/prod|twilio_auth_token
 
 # non-reference values are left untouched
 RAILS_LOG_LEVEL=info
