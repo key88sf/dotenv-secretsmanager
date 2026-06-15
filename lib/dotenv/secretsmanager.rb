@@ -29,3 +29,5 @@ module Dotenv
     end
   end
 end
+
+require "dotenv/secretsmanager/railtie" if defined?(Rails::Railtie)
