@@ -4,6 +4,8 @@ require "dotenv/secretsmanager/version"
 require "dotenv/secretsmanager/errors"
 require "dotenv/secretsmanager/configuration"
 require "dotenv/secretsmanager/reference"
+require "aws-sdk-secretsmanager"
+require "dotenv/secretsmanager/resolver"
 
 module Dotenv
   module SecretsManager
