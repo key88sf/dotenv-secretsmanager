@@ -50,4 +50,49 @@ RSpec.describe Dotenv::SecretsManager::Resolver do
       expect(env["WHOLE"]).to eq(json)
     end
   end
+
+  describe "JSON-key resolution" do
+    it "extracts the requested key from a JSON secret" do
+      json = '{"db_password":"pw","yelp_client_secret":"ys","twilio_auth_token":"tt"}'
+      client = FakeSecretsClient.new(secrets: { "firstquote/prod" => json })
+      env = {
+        "DB_PASSWORD" => "aws-sm:firstquote/prod|db_password",
+        "YELP_SECRET" => "aws-sm:firstquote/prod|yelp_client_secret",
+        "TWILIO_TOKEN" => "aws-sm:firstquote/prod|twilio_auth_token"
+      }
+
+      resolve(env, config_with(client: client))
+
+      expect(env).to eq(
+        "DB_PASSWORD" => "pw",
+        "YELP_SECRET" => "ys",
+        "TWILIO_TOKEN" => "tt"
+      )
+    end
+
+    it "coerces non-string JSON values to strings" do
+      client = FakeSecretsClient.new(secrets: { "s" => '{"port":5432}' })
+      env = { "DB_PORT" => "aws-sm:s|port" }
+
+      resolve(env, config_with(client: client))
+
+      expect(env["DB_PORT"]).to eq("5432")
+    end
+  end
+
+  describe "batching" do
+    it "fetches each distinct secret-id exactly once across many references" do
+      json = '{"db_password":"pw","yelp_client_secret":"ys","twilio_auth_token":"tt"}'
+      client = FakeSecretsClient.new(secrets: { "firstquote/prod" => json })
+      env = {
+        "DB_PASSWORD" => "aws-sm:firstquote/prod|db_password",
+        "YELP_SECRET" => "aws-sm:firstquote/prod|yelp_client_secret",
+        "TWILIO_TOKEN" => "aws-sm:firstquote/prod|twilio_auth_token"
+      }
+
+      resolve(env, config_with(client: client))
+
+      expect(client.requested_ids).to eq(["firstquote/prod"])
+    end
+  end
 end
