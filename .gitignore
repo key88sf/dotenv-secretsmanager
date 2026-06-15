@@ -4,3 +4,5 @@
 *.gem
 .idea
 docs
+.ruby-gemset
+.ruby-version
