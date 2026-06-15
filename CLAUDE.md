@@ -66,6 +66,23 @@ configure through `Dotenv::SecretsManager.configure` rather than mutating global
 state directly. The railtie spec stubs a minimal `Rails::Railtie` so it loads
 without Rails.
 
+## Releasing
+
+Published to RubyGems as `dotenv-secretsmanager`. To cut a release:
+
+1. Bump `VERSION` in `lib/dotenv/secretsmanager/version.rb` (SemVer: patch for
+   fixes, minor for backward-compatible features, major for breaking changes).
+2. Move the `[Unreleased]` notes in `CHANGELOG.md` into a new version section and
+   add its compare-link at the bottom.
+3. Commit, then `bundle exec rake release` (from `bundler/gem_tasks`, wired in the
+   `Rakefile`). This tags `vX.Y.Z`, builds, and pushes to RubyGems in one step,
+   and refuses to run on a dirty tree.
+
+A published version number can never be reused — `gem yank` pulls a bad version
+from distribution but does **not** free the number, so always bump forward.
+RubyGems MFA prompts for an OTP at push time, so run `rake release`
+interactively.
+
 ## Design docs
 
 `docs/specs/` and `docs/superpowers/plans/` contain the original design spec and
