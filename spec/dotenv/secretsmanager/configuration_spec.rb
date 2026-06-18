@@ -13,6 +13,10 @@ RSpec.describe Dotenv::SecretsManager::Configuration do
     expect(config.client).to be_nil
   end
 
+  it "defaults skip to false" do
+    expect(described_class.new.skip).to be(false)
+  end
+
   it "is mutable via accessors" do
     config = described_class.new
     config.on_error = :warn
