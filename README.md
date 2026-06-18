@@ -61,6 +61,35 @@ end
 Credentials and region come from the standard AWS SDK credential chain. The gem
 makes zero AWS calls and builds no client when no references are present.
 
+## Skipping resolution
+
+Set the `DOTENV_SECRETSMANAGER_SKIP` env var (or `configuration.skip`) to make
+`resolve!` a pure no-op: no AWS calls, no client constructed, and `aws-sm:`
+references left untouched in `ENV`.
+
+```sh
+DOTENV_SECRETSMANAGER_SKIP=true
+```
+
+```ruby
+Dotenv::SecretsManager.configure { |c| c.skip = true }
+```
+
+- The env var is truthy when it is `1`, `true`, `yes`, or `on`
+  (case-insensitive; surrounding whitespace is ignored). Anything else —
+  `""`, `0`, `false`, `no`, or unset — does not by itself skip.
+- Either source skips: a truthy env var **or** `configuration.skip == true`.
+  The config flag skips regardless of the env var.
+- The env var is read at call time (when the railtie fires), so it is the right
+  knob for build-time use.
+
+The primary use case is an image build that boots the app — for example a Rails
+`assets:precompile` step in a Docker build — where there is no AWS region or
+credentials and no secrets are needed. Without skipping, constructing the AWS
+client raises (e.g. `Aws::Errors::MissingRegionError`) and fails the build. Set
+`DOTENV_SECRETSMANAGER_SKIP=true` on that step only. Non-secret `.env`
+config still loads normally; only secrets resolution is skipped.
+
 ## Deployment (AWS Lightsail Container Service)
 
 Set only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` as
