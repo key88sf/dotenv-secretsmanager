@@ -26,7 +26,14 @@ module Dotenv
       end
 
       def resolve!(env = ENV)
-        return env if skip?
+        if skip?
+          # Delete reference-holding keys rather than leaving them: a raw
+          # aws-sm: literal is never a valid value for any consumer, and a
+          # present-but-invalid secret (e.g. RAILS_MASTER_KEY) breaks boot.
+          # Non-reference inline config is left intact for the build.
+          env.keys.each { |key| env.delete(key) if Reference.reference?(env[key]) }
+          return env
+        end
 
         Resolver.new(env: env, config: configuration).resolve!
       end

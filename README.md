@@ -63,9 +63,17 @@ makes zero AWS calls and builds no client when no references are present.
 
 ## Skipping resolution
 
-Set the `DOTENV_SECRETSMANAGER_SKIP` env var (or `configuration.skip`) to make
-`resolve!` a pure no-op: no AWS calls, no client constructed, and `aws-sm:`
-references left untouched in `ENV`.
+Set the `DOTENV_SECRETSMANAGER_SKIP` env var (or `configuration.skip`) to skip
+resolution: no AWS calls and no client constructed. Instead of resolving them,
+`resolve!` **removes** every `ENV` key whose value is an `aws-sm:` reference, so
+the net effect is as if those references were never in `ENV`.
+
+This deletion is deliberate: a raw `aws-sm:` value is never valid for any
+consumer, and a *present-but-invalid* secret breaks boot. For example, leaving
+`RAILS_MASTER_KEY="aws-sm:..."` in `ENV` makes Rails credentials decryption fail
+with `ArgumentError: key must be 16 bytes`, whereas an *absent* `RAILS_MASTER_KEY`
+is tolerated. Non-reference inline config (e.g. `DEFAULT_URL_HOST`) is left
+intact — the build still wants those values.
 
 ```sh
 DOTENV_SECRETSMANAGER_SKIP=true

@@ -38,30 +38,38 @@ RSpec.describe Dotenv::SecretsManager do
       expect(client.requested_ids).to eq(["firstquote/master-key"])
     end
 
-    it "skips, leaves ENV untouched, and makes no client call when the env var is truthy" do
+    it "skips, deletes references, leaves plain keys, and makes no client call when the env var is truthy" do
       ENV["DOTENV_SECRETSMANAGER_SKIP"] = "true"
       described_class.configure { |c| c.client = exploding_client }
 
-      env = { "RAILS_MASTER_KEY" => "aws-sm:firstquote/master-key" }
+      env = {
+        "RAILS_MASTER_KEY" => "aws-sm:firstquote/master-key",
+        "DEFAULT_URL_HOST" => "example.com"
+      }
 
       expect do
         returned = described_class.resolve!(env)
         expect(returned).to be(env)
       end.not_to raise_error
 
-      expect(env["RAILS_MASTER_KEY"]).to eq("aws-sm:firstquote/master-key")
+      expect(env).not_to have_key("RAILS_MASTER_KEY")
+      expect(env["DEFAULT_URL_HOST"]).to eq("example.com")
     end
 
-    it "skips when configuration.skip is true and the env var is unset" do
+    it "skips and deletes references when configuration.skip is true and the env var is unset" do
       described_class.configure do |c|
         c.skip = true
         c.client = exploding_client
       end
 
-      env = { "RAILS_MASTER_KEY" => "aws-sm:firstquote/master-key" }
+      env = {
+        "RAILS_MASTER_KEY" => "aws-sm:firstquote/master-key",
+        "DEFAULT_URL_HOST" => "example.com"
+      }
 
       expect { described_class.resolve!(env) }.not_to raise_error
-      expect(env["RAILS_MASTER_KEY"]).to eq("aws-sm:firstquote/master-key")
+      expect(env).not_to have_key("RAILS_MASTER_KEY")
+      expect(env["DEFAULT_URL_HOST"]).to eq("example.com")
     end
 
     it "does not skip when the env var is falsy" do
@@ -85,7 +93,7 @@ RSpec.describe Dotenv::SecretsManager do
       env = { "RAILS_MASTER_KEY" => "aws-sm:firstquote/master-key" }
 
       expect { described_class.resolve!(env) }.not_to raise_error
-      expect(env["RAILS_MASTER_KEY"]).to eq("aws-sm:firstquote/master-key")
+      expect(env).not_to have_key("RAILS_MASTER_KEY")
     end
   end
 end

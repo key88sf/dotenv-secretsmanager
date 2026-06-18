@@ -6,6 +6,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-18
+
+### Changed
+
+- When skipping, `resolve!` now **deletes** every `ENV` key whose value is an
+  `aws-sm:` reference instead of leaving the literal reference strings in place.
+  A raw `aws-sm:` value is never valid for any consumer, and a present-but-invalid
+  secret such as `RAILS_MASTER_KEY` breaks boot (e.g. `key must be 16 bytes`),
+  whereas an absent key is tolerated. Non-reference inline config (e.g.
+  `DEFAULT_URL_HOST`) is left intact. The `DOTENV_SECRETSMANAGER_SKIP` /
+  `configuration.skip` plumbing is unchanged.
+
 ## [0.2.0] - 2026-06-18
 
 ### Added
@@ -26,6 +38,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   process boot via AWS Secrets Manager. Framework-agnostic core with an optional
   Rails railtie.
 
-[Unreleased]: https://github.com/key88sf/dotenv-secretsmanager/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/key88sf/dotenv-secretsmanager/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/key88sf/dotenv-secretsmanager/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/key88sf/dotenv-secretsmanager/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/key88sf/dotenv-secretsmanager/releases/tag/v0.1.0
